@@ -9,6 +9,7 @@ set "DB_CONTAINER=prompts-chat-db"
 set "DB_VOLUME=prompts_chat_pgdata"
 set "APP_URL=http://localhost:3000"
 set "FIRST_RUN="
+if "%~1"==":open_browser" goto :open_browser
 
 where node >nul 2>&1 || (echo Node.js not found. Install Node.js 24 from https://nodejs.org & goto :fail)
 where docker >nul 2>&1 || (echo Docker not found. Install Docker Desktop from https://www.docker.com & goto :fail)
@@ -35,6 +36,9 @@ node -e "const c=require('crypto'),q=String.fromCharCode(34),s=c.randomBytes(32)
 REM Local login: email/password instead of GitHub/Google/Apple, open registration
 findstr /b "PCHAT_AUTH_PROVIDERS=" .env >nul || echo PCHAT_AUTH_PROVIDERS="credentials">>.env
 findstr /b "PCHAT_ALLOW_REGISTRATION=" .env >nul || echo PCHAT_ALLOW_REGISTRATION="true">>.env
+REM Prefill the login form with the seeded admin (dev mode only)
+findstr /b "PCHAT_DEV_LOGIN_EMAIL=" .env >nul || echo PCHAT_DEV_LOGIN_EMAIL="admin@prompts.chat">>.env
+findstr /b "PCHAT_DEV_LOGIN_PASSWORD=" .env >nul || echo PCHAT_DEV_LOGIN_PASSWORD="password123">>.env
 
 REM 3. Start (or create) the Postgres container
 docker inspect %DB_CONTAINER% >nul 2>&1
@@ -71,12 +75,20 @@ if defined FIRST_RUN (
 )
 
 REM 6. Run the app and open the browser once it responds
-start "" /b cmd /q /c "for /l %%i in (1,1,60) do (curl -s -o nul %APP_URL% && (start %APP_URL% & exit) || timeout /t 3 /nobreak >nul)"
+start "" /b cmd /c ""%~f0" :open_browser"
 echo.
 echo prompts.chat is starting at %APP_URL%  (Ctrl+C to stop)
 if defined FIRST_RUN echo Seeded admin login: admin@prompts.chat / password123
 call npm run dev
 goto :eof
+
+:open_browser
+REM Runs in the background: waits up to 3 minutes for the app, then opens it
+for /l %%i in (1,1,60) do (
+  curl -s -o nul "%APP_URL%" && (start "" "%APP_URL%" & exit /b 0)
+  timeout /t 3 /nobreak >nul
+)
+exit /b 0
 
 :fail
 echo.

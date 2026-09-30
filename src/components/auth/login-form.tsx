@@ -28,7 +28,11 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+interface LoginFormProps {
+  defaultCredentials?: { email: string; password: string };
+}
+
+export function LoginForm({ defaultCredentials }: LoginFormProps = {}) {
   const router = useRouter();
   const t = useTranslations("auth");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,8 +40,8 @@ export function LoginForm() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: defaultCredentials?.email ?? "",
+      password: defaultCredentials?.password ?? "",
     },
   });
 

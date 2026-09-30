@@ -11,6 +11,7 @@ interface AuthContentProps {
   useCloneBranding?: boolean;
   providerDisplayNames?: Record<string, string>;
   providerLogos?: Record<string, string>;
+  defaultCredentials?: { email: string; password: string };
 }
 
 const providerNames: Record<string, string> = {
@@ -21,7 +22,7 @@ const providerNames: Record<string, string> = {
   credentials: "Email",
 };
 
-export function AuthContent({ providers, mode, useCloneBranding = false, providerDisplayNames, providerLogos }: AuthContentProps) {
+export function AuthContent({ providers, mode, useCloneBranding = false, providerDisplayNames, providerLogos, defaultCredentials }: AuthContentProps) {
   const t = useTranslations("auth");
   const hasCredentials = providers.includes("credentials");
   const oauthProviders = providers.filter((p) => p !== "credentials");
@@ -61,7 +62,7 @@ export function AuthContent({ providers, mode, useCloneBranding = false, provide
       )}
 
       {/* Credentials form */}
-      {hasCredentials && (mode === "login" ? <LoginForm /> : <RegisterForm />)}
+      {hasCredentials && (mode === "login" ? <LoginForm defaultCredentials={defaultCredentials} /> : <RegisterForm />)}
     </div>
   );
 }

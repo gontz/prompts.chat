@@ -18,6 +18,11 @@ export default async function LoginPage() {
   const hasOnlyCredentials = providers.length === 1 && hasCredentials;
   const useCloneBranding = config.homepage?.useCloneBranding ?? false;
   const { displayNames, logos } = getProviderMetadata(providers);
+  // Local dev only: prefill the login form. Never sent in production builds.
+  const defaultCredentials =
+    process.env.NODE_ENV !== "production" && process.env.PCHAT_DEV_LOGIN_EMAIL
+      ? { email: process.env.PCHAT_DEV_LOGIN_EMAIL, password: process.env.PCHAT_DEV_LOGIN_PASSWORD ?? "" }
+      : undefined;
 
   return (
     <div className="container flex min-h-[calc(100vh-6rem)] flex-col items-center justify-center py-8">
@@ -29,7 +34,7 @@ export default async function LoginPage() {
           </p>
         </div>
         <div className="border rounded-lg p-4">
-          <AuthContent providers={providers} mode="login" useCloneBranding={useCloneBranding} providerDisplayNames={displayNames} providerLogos={logos} />
+          <AuthContent providers={providers} mode="login" useCloneBranding={useCloneBranding} providerDisplayNames={displayNames} providerLogos={logos} defaultCredentials={defaultCredentials} />
         </div>
         {hasCredentials && (
           <p className="text-center text-xs text-muted-foreground">
