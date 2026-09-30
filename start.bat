@@ -32,6 +32,9 @@ if exist ".env" goto :env_ready
 echo Creating .env...
 node -e "const c=require('crypto'),q=String.fromCharCode(34),s=c.randomBytes(32).toString('base64'),db='postgresql://prompts:prompts@localhost:5432/prompts?schema=public',v={DATABASE_URL:db,DIRECT_URL:db,NEXTAUTH_URL:'%APP_URL%',NEXTAUTH_SECRET:s,AUTH_SECRET:s,CRON_SECRET:c.randomBytes(16).toString('hex')};require('fs').writeFileSync('.env',Object.entries(v).map(([k,x])=>k+'='+q+x+q).join(String.fromCharCode(10))+String.fromCharCode(10))" || goto :fail
 :env_ready
+REM Local login: email/password instead of GitHub/Google/Apple, open registration
+findstr /b "PCHAT_AUTH_PROVIDERS=" .env >nul || echo PCHAT_AUTH_PROVIDERS="credentials">>.env
+findstr /b "PCHAT_ALLOW_REGISTRATION=" .env >nul || echo PCHAT_ALLOW_REGISTRATION="true">>.env
 
 REM 3. Start (or create) the Postgres container
 docker inspect %DB_CONTAINER% >nul 2>&1
@@ -71,6 +74,7 @@ REM 6. Run the app and open the browser once it responds
 start "" /b cmd /q /c "for /l %%i in (1,1,60) do (curl -s -o nul %APP_URL% && (start %APP_URL% & exit) || timeout /t 3 /nobreak >nul)"
 echo.
 echo prompts.chat is starting at %APP_URL%  (Ctrl+C to stop)
+if defined FIRST_RUN echo Seeded admin login: admin@prompts.chat / password123
 call npm run dev
 goto :eof
 
